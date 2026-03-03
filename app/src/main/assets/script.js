@@ -614,14 +614,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Long Polling Loop
+    let pollCounter = 0;
     async function pollMessages() {
         try {
-            const response = await fetch(`/api/chat?since=${lastMessageTimestamp}`);
+            pollCounter++;
+            // Every 3 polls (~90s with 30s timeouts), or if we have no messages yet, fetch all messages to sync deletions
+            const shouldFetchAll = pollCounter % 3 === 0 || lastMessageTimestamp === 0;
+            const response = await fetch(`/api/chat?since=${shouldFetchAll ? 0 : lastMessageTimestamp}`);
             if (response.ok) {
                 const data = await response.json();
-                if (data.messages && data.messages.length > 0) {
+                
+                if (shouldFetchAll && data.messages) {
+                    // Full sync: reconcile UI with server state
+                    const serverMessageIds = new Set(data.messages.map(m => m.id));
+                    
+                    // Remove messages from UI that are no longer on server
+                    const currentBubbles = Array.from(chatMessagesContainer.querySelectorAll('.chat-bubble[data-message-id]'));
+                    currentBubbles.forEach(bubble => {
+                        const id = bubble.dataset.messageId;
+                        if (!serverMessageIds.has(id)) {
+                            bubble.remove();
+                        }
+                    });
+                    
+                    // Add any new messages from server
+                    const displayedIds = new Set(currentBubbles.map(b => b.dataset.messageId).filter(id => serverMessageIds.has(id)));
                     data.messages.forEach(msg => {
-                        // Avoid duplicates if multiple long-polls resolve at once
+                        if (!displayedIds.has(msg.id)) {
+                            appendMessage(msg);
+                        }
+                        if (msg.timestamp > lastMessageTimestamp) {
+                            lastMessageTimestamp = msg.timestamp;
+                        }
+                    });
+                } else if (data.messages && data.messages.length > 0) {
+                    // Incremental: just append new messages
+                    data.messages.forEach(msg => {
                         if (msg.timestamp > lastMessageTimestamp) {
                             appendMessage(msg);
                             lastMessageTimestamp = msg.timestamp;

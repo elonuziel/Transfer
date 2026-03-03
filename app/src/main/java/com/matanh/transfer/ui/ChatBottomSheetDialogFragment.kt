@@ -2,13 +2,20 @@ package com.matanh.transfer.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
+import androidx.core.view.MenuProvider
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.matanh.transfer.R
 import com.matanh.transfer.server.ChatRepository
@@ -35,7 +42,26 @@ class ChatBottomSheetDialogFragment : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        chatAdapter = ChatAdapter()
+        // Setup menu for delete all option
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.menu_chat, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.action_delete_all_messages -> {
+                        showDeleteAllConfirmation()
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
+        chatAdapter = ChatAdapter { position ->
+            showDeleteConfirmation(position)
+        }
         rvChatMessages.layoutManager = LinearLayoutManager(requireContext()).apply {
             stackFromEnd = true
         }
@@ -66,5 +92,33 @@ class ChatBottomSheetDialogFragment : BottomSheetDialogFragment() {
                 etChatMessage.text.clear()
             }
         }
+    }
+
+    private fun showDeleteConfirmation(position: Int) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.delete_message_title)
+            .setMessage(R.string.delete_message_confirmation)
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                ChatRepository.deleteMessage(position)
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun showDeleteAllConfirmation() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.delete_all_messages_title)
+            .setMessage(R.string.delete_all_messages_confirmation)
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                ChatRepository.deleteAllMessages()
+                dialog.dismiss()
+            }
+            .show()
     }
 }

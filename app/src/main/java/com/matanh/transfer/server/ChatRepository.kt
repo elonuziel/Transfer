@@ -20,4 +20,20 @@ object ChatRepository {
         }
         _lastUpdateFlow.value = System.currentTimeMillis()
     }
+
+    fun deleteMessage(index: Int) {
+        synchronized(this) {
+            if (index >= 0 && index < _messages.size) {
+                _messages.removeAt(index)
+            }
+        }
+        _lastUpdateFlow.value = System.currentTimeMillis()
+    }
+
+    fun deleteAllMessages() {
+        synchronized(this) {
+            _messages.clear()
+        }
+        _lastUpdateFlow.value = System.currentTimeMillis()
+    }
 }

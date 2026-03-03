@@ -34,6 +34,17 @@
             android:src="@drawable/ic_content_copy"
             android:contentDescription="@string/copy_to_clipboard"
             app:tint="?android:attr/textColorSecondary" />
+
+        <ImageButton
+            android:id="@+id/btnDeleteMessage"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="6dp"
+            android:layout_marginStart="4dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_delete"
+            android:contentDescription="@string/delete_message"
+            app:tint="?android:attr/textColorSecondary" />
     </LinearLayout>
 
     <TextView

@@ -13,25 +13,31 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class ChatAdapter : ListAdapter<ChatMessage, ChatAdapter.ChatViewHolder>(ChatDiffCallback()) {
+class ChatAdapter(
+    private val onDeleteClick: (Int) -> Unit = {}
+) : ListAdapter<ChatMessage, ChatAdapter.ChatViewHolder>(ChatDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_chat_message, parent, false)
-        return ChatViewHolder(view)
+        return ChatViewHolder(view, onDeleteClick)
     }
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        holder.bind(getItem(position), position)
     }
 
-    class ChatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class ChatViewHolder(
+        itemView: View,
+        private val onDeleteClick: (Int) -> Unit
+    ) : RecyclerView.ViewHolder(itemView) {
         private val tvText: TextView = itemView.findViewById(R.id.tvChatText)
         private val tvTime: TextView = itemView.findViewById(R.id.tvChatTime)
         private val btnCopy: android.widget.ImageButton = itemView.findViewById(R.id.btnCopyMessage)
+        private val btnDelete: android.widget.ImageButton = itemView.findViewById(R.id.btnDeleteMessage)
         private val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
-        fun bind(msg: ChatMessage) {
+        fun bind(msg: ChatMessage, position: Int) {
             tvText.text = msg.text
             tvTime.text = dateFormat.format(Date(msg.timestamp))
             
@@ -40,6 +46,10 @@ class ChatAdapter : ListAdapter<ChatMessage, ChatAdapter.ChatViewHolder>(ChatDif
                 val clip = android.content.ClipData.newPlainText("Chat Message", msg.text)
                 clipboard.setPrimaryClip(clip)
                 android.widget.Toast.makeText(itemView.context, "Message copied", android.widget.Toast.LENGTH_SHORT).show()
+            }
+
+            btnDelete.setOnClickListener {
+                onDeleteClick(position)
             }
         }
     }

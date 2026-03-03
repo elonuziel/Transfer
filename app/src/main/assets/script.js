@@ -613,20 +613,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Long Polling Loop
-    let pollCounter = 0;
+    // Long Polling Loop - Always fetch all messages to detect deletions instantly
     async function pollMessages() {
         try {
-            pollCounter++;
-            // Every 3 polls (~90s with 30s timeouts), or if we have no messages yet, fetch all messages to sync deletions
-            const shouldFetchAll = pollCounter % 3 === 0 || lastMessageTimestamp === 0;
-            const response = await fetch(`/api/chat?since=${shouldFetchAll ? 0 : lastMessageTimestamp}`);
+            const response = await fetch(`/api/chat?since=${lastMessageTimestamp}`);
             if (response.ok) {
                 const data = await response.json();
                 
-                if (shouldFetchAll && data.messages) {
-                    // Full sync: reconcile UI with server state
-                    const serverMessageIds = new Set(data.messages.map(m => m.id));
+                // After long-poll returns (something changed), fetch ALL messages to sync deletions
+                if (data.messages && data.messages.length > 0) {
+                    // New messages arrived
+                    data.messages.forEach(msg => {
+                        if (msg.timestamp > lastMessageTimestamp) {
+                            appendMessage(msg);
+                            lastMessageTimestamp = msg.timestamp;
+                        }
+                    });
+                }
+                
+                // Always do a full sync to detect deletions
+                const syncResponse = await fetch(`/api/chat?since=0`);
+                if (syncResponse.ok) {
+                    const syncData = await syncResponse.json();
+                    const serverMessageIds = new Set(syncData.messages.map(m => m.id));
                     
                     // Remove messages from UI that are no longer on server
                     const currentBubbles = Array.from(chatMessagesContainer.querySelectorAll('.chat-bubble[data-message-id]'));
@@ -637,24 +646,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                     
-                    // Add any new messages from server
-                    const displayedIds = new Set(currentBubbles.map(b => b.dataset.messageId).filter(id => serverMessageIds.has(id)));
-                    data.messages.forEach(msg => {
-                        if (!displayedIds.has(msg.id)) {
-                            appendMessage(msg);
+                    // Update lastMessageTimestamp to highest on server
+                    if (syncData.messages.length > 0) {
+                        const maxTimestamp = Math.max(...syncData.messages.map(m => m.timestamp));
+                        if (maxTimestamp > lastMessageTimestamp) {
+                            lastMessageTimestamp = maxTimestamp;
                         }
-                        if (msg.timestamp > lastMessageTimestamp) {
-                            lastMessageTimestamp = msg.timestamp;
-                        }
-                    });
-                } else if (data.messages && data.messages.length > 0) {
-                    // Incremental: just append new messages
-                    data.messages.forEach(msg => {
-                        if (msg.timestamp > lastMessageTimestamp) {
-                            appendMessage(msg);
-                            lastMessageTimestamp = msg.timestamp;
-                        }
-                    });
+                    } else {
+                        // All messages deleted
+                        lastMessageTimestamp = 0;
+                    }
                 }
             }
         } catch (error) {

@@ -613,49 +613,44 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Long Polling Loop - Always fetch all messages to detect deletions instantly
+    // Track displayed message IDs to avoid duplicates
+    const displayedMessageIds = new Set();
+
+    // Long Polling Loop - Simplified reliable approach
     async function pollMessages() {
         try {
-            const response = await fetch(`/api/chat?since=${lastMessageTimestamp}`);
+            // Always fetch all messages to ensure consistency
+            const response = await fetch(`/api/chat?since=0`);
             if (response.ok) {
                 const data = await response.json();
+                const serverMessageIds = new Set(data.messages ? data.messages.map(m => m.id) : []);
                 
-                // After long-poll returns (something changed), fetch ALL messages to sync deletions
-                if (data.messages && data.messages.length > 0) {
-                    // New messages arrived
-                    data.messages.forEach(msg => {
-                        if (msg.timestamp > lastMessageTimestamp) {
-                            appendMessage(msg);
-                            lastMessageTimestamp = msg.timestamp;
-                        }
-                    });
-                }
-                
-                // Always do a full sync to detect deletions
-                const syncResponse = await fetch(`/api/chat?since=0`);
-                if (syncResponse.ok) {
-                    const syncData = await syncResponse.json();
-                    const serverMessageIds = new Set(syncData.messages.map(m => m.id));
-                    
-                    // Remove messages from UI that are no longer on server
-                    const currentBubbles = Array.from(chatMessagesContainer.querySelectorAll('.chat-bubble[data-message-id]'));
-                    currentBubbles.forEach(bubble => {
-                        const id = bubble.dataset.messageId;
-                        if (!serverMessageIds.has(id)) {
-                            bubble.remove();
-                        }
-                    });
-                    
-                    // Update lastMessageTimestamp to highest on server
-                    if (syncData.messages.length > 0) {
-                        const maxTimestamp = Math.max(...syncData.messages.map(m => m.timestamp));
-                        if (maxTimestamp > lastMessageTimestamp) {
-                            lastMessageTimestamp = maxTimestamp;
-                        }
-                    } else {
-                        // All messages deleted
-                        lastMessageTimestamp = 0;
+                // Remove UI messages that no longer exist on server (deleted)
+                const currentBubbles = Array.from(chatMessagesContainer.querySelectorAll('.chat-bubble[data-message-id]'));
+                currentBubbles.forEach(bubble => {
+                    const id = bubble.dataset.messageId;
+                    if (!serverMessageIds.has(id)) {
+                        bubble.remove();
+                        displayedMessageIds.delete(id);
                     }
+                });
+                
+                // Add new messages from server that aren't displayed yet
+                if (data.messages) {
+                    data.messages.forEach(msg => {
+                        if (!displayedMessageIds.has(msg.id)) {
+                            appendMessage(msg);
+                            displayedMessageIds.add(msg.id);
+                        }
+                    });
+                    
+                    // Update timestamp to newest message
+                    if (data.messages.length > 0) {
+                        lastMessageTimestamp = Math.max(...data.messages.map(m => m.timestamp));
+                    }
+                } else {
+                    // No messages
+                    lastMessageTimestamp = 0;
                 }
             }
         } catch (error) {
@@ -663,7 +658,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Wait a bit before retrying on error to avoid hammering the server
             await new Promise(resolve => setTimeout(resolve, 5000));
         } finally {
-            // Immediately start next poll IF not fetching again concurrently
+            // Wait before next poll to avoid hammering server
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Immediately start next poll
             pollMessages();
         }
     }

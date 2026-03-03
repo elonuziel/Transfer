@@ -12,8 +12,8 @@ android {
         applicationId = "com.matanh.transfer"
         minSdk = 29
         targetSdk = 35
-        versionCode = 601
-        versionName = " ;) "
+        versionCode = (project.findProperty("versionCode") as? String)?.toIntOrNull() ?: 601
+        versionName = (project.findProperty("versionName") as? String) ?: " ;) "
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

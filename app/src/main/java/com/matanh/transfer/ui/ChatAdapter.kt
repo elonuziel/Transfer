@@ -24,7 +24,7 @@ class ChatAdapter(
     }
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {
-        holder.bind(getItem(position), position)
+        holder.bind(getItem(position))
     }
 
     class ChatViewHolder(
@@ -37,7 +37,7 @@ class ChatAdapter(
         private val btnDelete: android.widget.ImageButton = itemView.findViewById(R.id.btnDeleteMessage)
         private val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
-        fun bind(msg: ChatMessage, position: Int) {
+        fun bind(msg: ChatMessage) {
             tvText.text = msg.text
             tvTime.text = dateFormat.format(Date(msg.timestamp))
             
@@ -49,7 +49,10 @@ class ChatAdapter(
             }
 
             btnDelete.setOnClickListener {
-                onDeleteClick(position)
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onDeleteClick(position)
+                }
             }
         }
     }

@@ -483,6 +483,25 @@ document.addEventListener('DOMContentLoaded', () => {
         chatPanel.classList.add('hidden');
         chatFab.style.display = 'flex';
     });
+    
+    const chatDeleteAllButton = document.getElementById('chat-delete-all-button');
+    chatDeleteAllButton.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to delete all messages? This cannot be undone.')) {
+            try {
+                const response = await fetch('/api/chat', { method: 'DELETE' });
+                if (response.ok) {
+                    chatMessagesContainer.innerHTML = '';
+                    lastMessageTimestamp = 0;
+                } else {
+                    console.error('Failed to delete all messages');
+                    alert('Failed to delete all messages');
+                }
+            } catch (error) {
+                console.error('Error deleting all messages:', error);
+                alert('Error deleting all messages');
+            }
+        }
+    });
 
     function updateUnreadBadge() {
         if (unreadCount > 0) {
@@ -507,6 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // If there are multiple clients, differentiating 'me' vs 'other' dynamically is hard without a sender ID.
         // For now, styling them as generic bubbles.
         bubble.className = `chat-bubble message`;
+        bubble.dataset.messageId = msg.id;
 
         bubble.innerHTML = `
             <div class="chat-bubble-content">
@@ -514,12 +534,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="chat-copy-btn" title="Copy message" aria-label="Copy message">
                     <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                 </button>
+                <button class="chat-delete-btn" title="Delete message" aria-label="Delete message">
+                    <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
             </div>
             <div class="chat-bubble-time">${formatTime(msg.timestamp)}</div>
         `;
         bubble.querySelector('.chat-bubble-text').textContent = msg.text;
 
         const copyBtn = bubble.querySelector('.chat-copy-btn');
+        const deleteBtn = bubble.querySelector('.chat-delete-btn');
+        
         copyBtn.addEventListener('click', () => {
             const handleSuccess = () => {
                 const originalSvg = copyBtn.innerHTML;
@@ -559,6 +584,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } catch (err) {
                     handleError(err);
+                }
+            }
+        });
+        
+        deleteBtn.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to delete this message?')) {
+                try {
+                    const response = await fetch(`/api/chat/${msg.id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        bubble.remove();
+                    } else {
+                        console.error('Failed to delete message');
+                        alert('Failed to delete message');
+                    }
+                } catch (error) {
+                    console.error('Error deleting message:', error);
+                    alert('Error deleting message');
                 }
             }
         });

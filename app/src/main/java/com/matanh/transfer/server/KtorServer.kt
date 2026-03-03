@@ -624,6 +624,30 @@ fun Application.ktorServer(
                         call.respond(HttpStatusCode.InternalServerError, ErrorResponse("Failed to send message: ${e.localizedMessage}"))
                     }
                 }
+                
+                delete("/chat/{id}") {
+                    try {
+                        val id = call.parameters["id"] ?: run {
+                            call.respond(HttpStatusCode.BadRequest, ErrorResponse("Message ID missing"))
+                            return@delete
+                        }
+                        ChatRepository.deleteMessageById(id)
+                        call.respond(HttpStatusCode.OK, SuccessResponse("Message deleted"))
+                    } catch (e: Exception) {
+                        logger.e(e, "Error deleting chat message")
+                        call.respond(HttpStatusCode.InternalServerError, ErrorResponse("Failed to delete message: ${e.localizedMessage}"))
+                    }
+                }
+                
+                delete("/chat") {
+                    try {
+                        ChatRepository.deleteAllMessages()
+                        call.respond(HttpStatusCode.OK, SuccessResponse("All messages deleted"))
+                    } catch (e: Exception) {
+                        logger.e(e, "Error deleting all chat messages")
+                        call.respond(HttpStatusCode.InternalServerError, ErrorResponse("Failed to delete all messages: ${e.localizedMessage}"))
+                    }
+                }
             }
 
             // HTTP Interface

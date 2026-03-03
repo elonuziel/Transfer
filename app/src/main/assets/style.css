@@ -861,3 +861,31 @@ footer {
     height: 16px;
     fill: currentColor;
 }
+
+/* Delete button in chat */
+.chat-delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 2px;
+    margin-left: 4px;
+    transition: color 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-delete-btn:hover {
+    color: var(--error-color);
+}
+
+.chat-delete-btn:active {
+    transform: scale(0.9);
+}
+
+.chat-delete-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}

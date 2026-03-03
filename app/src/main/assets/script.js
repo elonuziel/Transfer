@@ -589,19 +589,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         deleteBtn.addEventListener('click', async () => {
-            if (confirm('Are you sure you want to delete this message?')) {
-                try {
-                    const response = await fetch(`/api/chat/${msg.id}`, { method: 'DELETE' });
-                    if (response.ok) {
-                        bubble.remove();
-                    } else {
-                        console.error('Failed to delete message');
-                        alert('Failed to delete message');
-                    }
-                } catch (error) {
-                    console.error('Error deleting message:', error);
-                    alert('Error deleting message');
+            try {
+                const response = await fetch(`/api/chat/${msg.id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    bubble.remove();
+                } else {
+                    console.error('Failed to delete message');
+                    alert('Failed to delete message');
                 }
+            } catch (error) {
+                console.error('Error deleting message:', error);
+                alert('Error deleting message');
             }
         });
 

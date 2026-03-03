@@ -2,15 +2,10 @@ package com.matanh.transfer.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import androidx.appcompat.app.AlertDialog
-import androidx.core.view.MenuProvider
-import androidx.lifecycle.Lifecycle
+import android.widget.ImageButton
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -27,6 +22,7 @@ class ChatBottomSheetDialogFragment : BottomSheetDialogFragment() {
     private lateinit var rvChatMessages: RecyclerView
     private lateinit var etChatMessage: EditText
     private lateinit var btnSendChat: FloatingActionButton
+    private lateinit var btnDeleteAllMessages: ImageButton
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,31 +32,15 @@ class ChatBottomSheetDialogFragment : BottomSheetDialogFragment() {
         rvChatMessages = view.findViewById(R.id.rvChatMessages)
         etChatMessage = view.findViewById(R.id.etChatMessage)
         btnSendChat = view.findViewById(R.id.btnSendChat)
+        btnDeleteAllMessages = view.findViewById(R.id.btnDeleteAllMessages)
         return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Setup menu for delete all option
-        requireActivity().addMenuProvider(object : MenuProvider {
-            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                menuInflater.inflate(R.menu.menu_chat, menu)
-            }
-
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                return when (menuItem.itemId) {
-                    R.id.action_delete_all_messages -> {
-                        showDeleteAllConfirmation()
-                        true
-                    }
-                    else -> false
-                }
-            }
-        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-
         chatAdapter = ChatAdapter { id ->
-            showDeleteConfirmation(id)
+            ChatRepository.deleteMessageById(id)
         }
         rvChatMessages.layoutManager = LinearLayoutManager(requireContext()).apply {
             stackFromEnd = true
@@ -92,20 +72,10 @@ class ChatBottomSheetDialogFragment : BottomSheetDialogFragment() {
                 etChatMessage.text.clear()
             }
         }
-    }
 
-    private fun showDeleteConfirmation(id: String) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.delete_message_title)
-            .setMessage(R.string.delete_message_confirmation)
-            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
-                dialog.dismiss()
-            }
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                ChatRepository.deleteMessageById(id)
-                dialog.dismiss()
-            }
-            .show()
+        btnDeleteAllMessages.setOnClickListener {
+            showDeleteAllConfirmation()
+        }
     }
 
     private fun showDeleteAllConfirmation() {

@@ -67,6 +67,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fileAdapter: FileAdapter
     private lateinit var fabUpload: FloatingActionButton
     private lateinit var fabChat: FloatingActionButton
+    private lateinit var viewChatBadge: View
+    private var lastSeenMessageTime: Long = 0L
     private lateinit var viewStatusIndicator: View
     private lateinit var tvNoFilesMessage: TextView
     private lateinit var btnStartServer: Button
@@ -144,6 +146,7 @@ class MainActivity : AppCompatActivity() {
         initViews()
         setupClickListeners()
         setupFileListAndObservers()
+        observeChatMessages()
 
         // Observe the shared folder URI from the ViewModel
         viewModel.selectedFolderUri.observe(this) { uri ->
@@ -188,6 +191,7 @@ class MainActivity : AppCompatActivity() {
         rvFiles = findViewById(R.id.rvFiles)
         fabUpload = findViewById(R.id.fabUpload)
         fabChat = findViewById(R.id.fabChat)
+        viewChatBadge = findViewById(R.id.viewChatBadge)
         viewStatusIndicator = findViewById(R.id.viewStatusIndicator)
         tvNoFilesMessage = findViewById(R.id.tvNoFilesMessage)
         btnStartServer = findViewById(R.id.btnStartServer)
@@ -236,6 +240,8 @@ class MainActivity : AppCompatActivity() {
         
         fabChat.setOnClickListener {
             com.matanh.transfer.ui.ChatBottomSheetDialogFragment().show(supportFragmentManager, "ChatBottomSheet")
+            viewChatBadge.visibility = View.GONE
+            lastSeenMessageTime = System.currentTimeMillis()
         }
     }
 
@@ -521,6 +527,24 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 fileServerService!!.pullRefresh.collect {
                     currentSelectedFolderUri?.let { viewModel.loadFiles(it) }
+                }
+            }
+        }
+    }
+
+    private fun observeChatMessages() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                com.matanh.transfer.server.ChatRepository.lastUpdateFlow.collect { _ ->
+                    val messages = com.matanh.transfer.server.ChatRepository.messages
+                    if (messages.isNotEmpty()) {
+                        val lastMsgTime = messages.last().timestamp
+                        if (lastMsgTime > lastSeenMessageTime) {
+                            viewChatBadge.visibility = View.VISIBLE
+                        }
+                    } else {
+                        viewChatBadge.visibility = View.GONE
+                    }
                 }
             }
         }

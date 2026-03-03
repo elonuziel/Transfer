@@ -6,21 +6,26 @@
     android:orientation="vertical"
     android:padding="8dp">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:background="@drawable/bg_chat_bubble"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
         android:paddingStart="12dp"
-        android:paddingEnd="8dp"
-        android:gravity="center_vertical">
+        android:paddingEnd="8dp">
 
         <TextView
             android:id="@+id/tvChatText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnCopyMessage"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="16sp" />
 
@@ -33,6 +38,10 @@
             android:background="?selectableItemBackgroundBorderless"
             android:src="@drawable/ic_content_copy"
             android:contentDescription="@string/copy_to_clipboard"
+            app:layout_constraintStart_toEndOf="@id/tvChatText"
+            app:layout_constraintEnd_toStartOf="@id/btnDeleteMessage"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:tint="?android:attr/textColorSecondary" />
 
         <ImageButton
@@ -44,8 +53,12 @@
             android:background="?selectableItemBackgroundBorderless"
             android:src="@drawable/ic_delete"
             android:contentDescription="@string/delete_message"
+            app:layout_constraintStart_toEndOf="@id/btnCopyMessage"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:tint="?android:attr/textColorSecondary" />
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <TextView
         android:id="@+id/tvChatTime"

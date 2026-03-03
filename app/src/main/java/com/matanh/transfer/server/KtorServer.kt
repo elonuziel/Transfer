@@ -710,7 +710,7 @@ data class ErrorResponse(val error: String)
 data class SuccessResponse(val message: String)
 
 @Serializable
-data class ChatMessage(val text: String, val timestamp: Long)
+data class ChatMessage(val id: String = java.util.UUID.randomUUID().toString(), val text: String, val timestamp: Long)
 
 @Serializable
 data class ChatMessagesResponse(val messages: List<ChatMessage>)

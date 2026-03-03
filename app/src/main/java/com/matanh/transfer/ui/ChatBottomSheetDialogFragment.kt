@@ -59,8 +59,8 @@ class ChatBottomSheetDialogFragment : BottomSheetDialogFragment() {
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        chatAdapter = ChatAdapter { position ->
-            showDeleteConfirmation(position)
+        chatAdapter = ChatAdapter { id ->
+            showDeleteConfirmation(id)
         }
         rvChatMessages.layoutManager = LinearLayoutManager(requireContext()).apply {
             stackFromEnd = true
@@ -94,7 +94,7 @@ class ChatBottomSheetDialogFragment : BottomSheetDialogFragment() {
         }
     }
 
-    private fun showDeleteConfirmation(position: Int) {
+    private fun showDeleteConfirmation(id: String) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.delete_message_title)
             .setMessage(R.string.delete_message_confirmation)
@@ -102,7 +102,7 @@ class ChatBottomSheetDialogFragment : BottomSheetDialogFragment() {
                 dialog.dismiss()
             }
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                ChatRepository.deleteMessage(position)
+                ChatRepository.deleteMessageById(id)
                 dialog.dismiss()
             }
             .show()

@@ -14,7 +14,7 @@ import java.util.Date
 import java.util.Locale
 
 class ChatAdapter(
-    private val onDeleteClick: (Int) -> Unit = {}
+    private val onDeleteClick: (String) -> Unit = {}
 ) : ListAdapter<ChatMessage, ChatAdapter.ChatViewHolder>(ChatDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
@@ -29,7 +29,7 @@ class ChatAdapter(
 
     class ChatViewHolder(
         itemView: View,
-        private val onDeleteClick: (Int) -> Unit
+        private val onDeleteClick: (String) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
         private val tvText: TextView = itemView.findViewById(R.id.tvChatText)
         private val tvTime: TextView = itemView.findViewById(R.id.tvChatTime)
@@ -51,7 +51,7 @@ class ChatAdapter(
             btnDelete.setOnClickListener {
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
-                    onDeleteClick(position)
+                    onDeleteClick(msg.id)
                 }
             }
         }
@@ -59,7 +59,7 @@ class ChatAdapter(
 
     class ChatDiffCallback : DiffUtil.ItemCallback<ChatMessage>() {
         override fun areItemsTheSame(oldItem: ChatMessage, newItem: ChatMessage): Boolean {
-            return oldItem.timestamp == newItem.timestamp && oldItem.text == newItem.text
+            return oldItem.id == newItem.id
         }
 
         override fun areContentsTheSame(oldItem: ChatMessage, newItem: ChatMessage): Boolean {

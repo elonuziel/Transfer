@@ -21,10 +21,11 @@ object ChatRepository {
         _lastUpdateFlow.value = System.currentTimeMillis()
     }
 
-    fun deleteMessage(index: Int) {
+    fun deleteMessageById(id: String) {
         synchronized(this) {
-            if (index >= 0 && index < _messages.size) {
-                _messages.removeAt(index)
+            val idx = _messages.indexOfFirst { it.id == id }
+            if (idx >= 0) {
+                _messages.removeAt(idx)
             }
         }
         _lastUpdateFlow.value = System.currentTimeMillis()

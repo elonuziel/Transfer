@@ -49,7 +49,7 @@ class ChatAdapter(
             }
 
             btnDelete.setOnClickListener {
-                val position = bindingAdapterPosition
+                val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onDeleteClick(position)
                 }
